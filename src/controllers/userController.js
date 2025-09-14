@@ -1,39 +1,38 @@
 import { IsEmpty } from '../helpers/validations.js'
-import User from '../models/user.js'
+import user from '../models/user.js'
 import { validateParcialUser, validateUser } from '../schemas/users.js'
 
 export class userController {
   static getAll = async (req, res) => {
-    const usuarios = await User.getAll()
-    res.send(usuarios)
+    // const { data } = (await user.getAll()).orderBy('name')
+    const { data } = await user.orderBy('name', 'DESC')
+    res.status(200).json(data)
+    // res.render('list', { data })
   }
 
   static getById = async (req, res) => {
     const { id } = req.params
-    const usuario = await User.getById(id)
-    res.json(usuario)
+    const { data } = await user.getById(id)
+    res.status(200).json(data)
+    // res.render('list', { data })
   }
 
   static create = async (req, res) => {
-    const data = req.body
-
     const result = validateUser(req.body)
 
     if (!result.success) {
       return res.status(400).json({ error: JSON.parse(result.error.message) })
     }
 
-    await User.create(result.data)
-    res.json(`usuario creado con el nombre ${data.name} creado`)
+    res.json(await user.create(result.data))
   }
 
   static update = async (req, res) => {
     const { id } = req.params
 
-    const hasUser = await User.getById(id)
-
-    if (!IsEmpty(hasUser)) {
-      return res.status(404).json({ message: 'user not found' })
+    const userExists = (await user.getById(id)).data
+    if (!IsEmpty(userExists)) {
+      return res.status(404).json({ message: 'User not found' })
     }
 
     const result = validateParcialUser(req.body)
@@ -42,8 +41,12 @@ export class userController {
       return res.status(400).json({ error: JSON.parse(result.error.message) })
     }
 
-    res.status(202)
-    await User.update(id, result.data)
-    res.send(`usuario ${id} modificado`)
+    res.status(200).json(await user.update(id, result.data))
+  }
+
+  static delete = async (req, res) => {
+    const { id } = req.params
+
+    res.status(203).json(await user.delete(id))
   }
 }
